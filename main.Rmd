@@ -116,3 +116,52 @@ results<-rbind(train.results,test.results)
 # plot the observed vs the predicted activity scores
 plotsar(results)
 ```
+## Tune the model using Cross Validation
+Now, I am tuning the pls model with 10 fold cross validation and using up to 15 components.
+```{r}
+set.seed(42)     # to get consistent results during testing
+tune_length = 15 # set the max amount of components to use during tuning
+
+# set up 10-fold cross validation
+ctrl <- trainControl(method = "cv",number=10)
+# tune the pls model with cross validation with different numbers of components
+pls_tune <- train(subset(trainset_x,select=-c(activity)), train_y,
+                 method = "pls",
+                 tuneLength = tune_length,
+                 trControl = ctrl,
+                 preProc = "BoxCox")
+```
+The following code plots the RMSE over the number of components in the model.
+```{r}
+# plot results of pls_tune
+plot(pls_tune)
+```
+Predict the values of the train set and the test set.
+```{r}
+# predict the activity for the train and test sets
+pls_pred_train   <- predict(pls_tune,trainset_x)
+pls_pred_test    <- predict(pls_tune,testset_x)
+
+# set up dataframes to make calculating the error easier
+pls_values_train <- data.frame(obs = train_y, pred = pls_pred_train)
+pls_values_test  <- data.frame(obs = test_y, pred = pls_pred_test)
+
+```
+I calculate the RMSE and $R^2$ of the tuned pls results.
+```{r}
+r2se(pls_values_train$obs,pls_values_train$pred)
+r2se(pls_values_test$obs,pls_values_test$pred)
+```
+Finally, I plot the regression plots of the train set and the test set.
+```{r}
+# plot the observed vs the predicted activity scores of the trainset
+y<-xyplot(trainset_x$activity ~ pls_pred_train, 
+          type = c('g', 'p'),  xlab = "Predicted", ylab = "Observed",
+          panel = function(x,y, ...){ 
+            panel.xyplot(x,y,...)
+            panel.lines(x, predict(pls_tune), col = 'black', lwd = 2) 
+          } 
+) 
+# add the observed vs the predicted activity scores of the testset to the plot
+y+as.layer(xyplot(test_y ~ pls_pred_test,pch=17,col="black"))
+```
