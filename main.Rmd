@@ -18,16 +18,11 @@ if (!require("pacman")) suppressPackageStartupMessages(install.packages("pacman"
 pacman::p_load("ggplot2", "dplyr","pls","readr","caTools","caret","gplots","car","rcdk","iterators","lattice","latticeExtra")
 ```
 ## Importing the data.
-To import the data I am first setting the local path to the directory that the data is stored in.
-```{r}
-DATA.DIR <- "/Users/felix/Google Drive/Uni/Systems Biology/Year 2/Scientific Programming/scientificProgramming2/data"
-setwd(DATA.DIR) # set the working directory
-```
-Afterwards, I import the activity scores. To properly import the activity scores matrix, 2 import function calls are needed: one to import the header and one to import the data.
+First, I import the activity scores. To properly import the activity scores matrix, 2 import function calls are needed: one to import the header and one to import the data.
 ```{r}
 # import the header and the activity scores
-headers <- read.csv('aid624202.csv', header=FALSE, nrows=1, as.is=TRUE, row=1)
-data.raw <- read.csv('aid624202.csv',skip=6,header=FALSE,row=1)
+headers <- read.csv('data/aid624202.csv', header=FALSE, nrows=1, as.is=TRUE, row=1)
+data.raw <- read.csv('data/aid624202.csv',skip=6,header=FALSE,row=1)
 colnames(data.raw) <- headers                                       # change the names of the data to the correct ones
 data.raw <- data.raw[,c("PUBCHEM_SID","PUBCHEM_ACTIVITY_SCORE")]     # select SID and the activity score from the data
 colnames(data.raw) <- c("SID","Score")                               # change column names
@@ -86,14 +81,14 @@ class(descs)
 # get the SID for the molecules
 molSIDs = unlist(lapply(mols, function(x) { get.property(x, "PUBCHEM_SUBSTANCE_ID")} ))
 # save the descriptor dataframe as a csv
-write.csv(cbind(molSIDs, descs), file = "descriptors12200.csv")
+write.csv(cbind(molSIDs, descs), file = "data/descriptors12200.csv")
 ```
 Then I combine the descriptor matrix with the score vector.
 ```{r}
 # import the previously computed descriptor matrix
 # import "descriptors.csv" instead to use the descriptors.csv 
 # file with 1050 molecules
-x <- read.csv('descriptors12200.csv',row=2)
+x <- read.csv('data/descriptors12200.csv',row=2)
 # select the selected samples from the dataframe
 data.raw = data.raw[match(rownames(x),data.raw$SID),]
 
