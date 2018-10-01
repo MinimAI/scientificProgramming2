@@ -1,1 +1,4 @@
-# scientificProgramming2
+# Making multivariate statistics reproducible
+The R Markdown notebook `main.Rmd` uses a partial least squares model for the ability to activate BRCA1 expression (PubChem Assay AID 624202). The notebook uses a `.csv`, from which the activity scores are taken, and a `.sdf` file, which is used to compute the descriptor matrix, from [PubChem](https://pubchem.ncbi.nlm.nih.gov/bioassay/624202). The code chunks to compute the descriptor matrix are deactivated, as they are rather time-consuming, and the pre-computed matrix in the `descriptors2.csv` is used for further computations. The notebook uses a training-test set split of 80/20. Additionally, the model is tuned using cross-validation to estimate the number of latent variables to use in the model. Finally, various plots are produced to show the accuracy of the model.
+
+The notebook is hosted [here](https://minimai.github.io/scientificProgramming2/main.html). The files necessary to reproduce the compiled notebook can be found at [github](https://github.com/MinimAI/scientificProgramming2), as well as [PubChem](https://pubchem.ncbi.nlm.nih.gov/bioassay/624202).
