@@ -65,3 +65,54 @@ train_y<-trainset_x$activity
 testset_x<-data[ind==2,1:dim(data)[2]]
 test_y<- testset_x$activity
 ```
+
+### Useful functions
+Before starting the analysis, 2 functions are defined below.
+```{r}
+# Function to compute RMSE and R2 
+r2se<- function (obs,pred){
+  rmse<-(mean((obs -pred)^2))^0.5 
+  ssr<-sum((obs - pred)^2)
+  sst<-sum((obs - mean(obs))^2)
+  R2<-1-(ssr/sst)
+  output<-list(RMSE=rmse,RSquared=R2)
+  return(output)
+}
+
+plotsar <-function(results){
+  # plot the observed vs the predicted activity scores using ggplot
+  return(ggplot(results,aes(x=observed,y=predicted,color=factor(set),shape=factor(set)))+geom_point()+scale_colour_manual(values=c("blue", "yellow"))+
+          theme(axis.ticks.y=element_line(size=1),axis.text.y=element_text(size=16),axis.ticks.length=unit(0.25,"cm"), 
+                panel.background = element_rect(fill = "black", colour = NA))+
+          theme(axis.title=element_text(size=12,face="bold",colour = 'white'),plot.background = element_rect(colour = 'black', fill = 'black'))+
+          theme( legend.title = element_text(size = 12, face = "bold", hjust = 0, colour = 'white'),
+                legend.background=element_rect(color="black",fill="black"),legend.text=element_text(size=12,color="white",face="bold"),
+                axis.title.x = element_text(size = 12, colour = 'white', vjust = 1) ,axis.title.y = element_text(size = 12, colour = 'white'))+
+          ggtitle("Predicted vs test set QSAR results")+
+          theme(plot.title=element_text(lineheight=.8,face="bold",color="white",size=14))+stat_smooth(span = 0.9))
+
+}
+```
+## Use pls to model the data
+```{r}
+# fit a pls model to predict the activity
+plsFit <- plsr(activity ~ ., data = trainset_x)
+
+# Using the first ten components
+pls.test <- data.frame(predict(plsFit, testset_x, ncomp = 1:10))
+pls.train <- data.frame(predict(plsFit, trainset_x, ncomp = 1:10))
+#----------------------------------------------------
+# Summarizing results of test set
+rlmValues <- data.frame(obs = test_y, pred = pls.test$activity.10.comps)
+
+# print the RSME and R2
+r2se(rlmValues$obs,rlmValues$pred)
+
+# Create a dataframe for train and test set results for plotting
+train.results<-data.frame(observed=train_y,predicted=pls.train$activity.5.comps,set="train")
+test.results <- data.frame(observed=test_y,predicted=pls.test$activity.5.comps,set="test")
+results<-rbind(train.results,test.results)
+
+# plot the observed vs the predicted activity scores
+plotsar(results)
+```
