@@ -124,6 +124,7 @@ descs   <- descs[, -badCols]
 # further filter out columns with low correlation
 r2  <- which(cor(descs[1:(length(descs)-1)])^2 > .29, arr.ind=TRUE)
 r2  <- r2[ r2[,1] > r2[,2] , ]
+# temporary variable to hold the filtered descriptor dataframe
 d   <- descs[, -unique(r2[,2])]
 ```
 ## Normalizing the data 
@@ -197,7 +198,7 @@ plotsar(results)
 Now, I am tuning the pls model with 10 fold cross validation and using up to 15 components.
 ```{r}
 set.seed(42)     # to get consistent results during testing
-tune_length = 15 # set the max amount of components to use during tuning
+tune_length <- 15 # set the max amount of components to use during tuning
 
 # set up 10-fold cross validation
 ctrl <- trainControl(method = "cv",number=10)
@@ -229,7 +230,7 @@ I calculate the RMSE and $R^2$ of the tuned pls results.
 r2se(pls_values_train$obs,pls_values_train$pred)
 r2se(pls_values_test$obs,pls_values_test$pred)
 ```
-Finally, I plot the regression plots of the train set and the test set.
+Finally, I plot the regression plots of the train set and the test set. As you can see, I was not able to accurately predict the activity score using pls.
 ```{r}
 # plot the observed vs the predicted activity scores of the trainset
 y<-xyplot(trainset_x$activity ~ pls_pred_train, 
