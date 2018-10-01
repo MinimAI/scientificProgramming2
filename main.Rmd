@@ -33,3 +33,35 @@ colnames(data.raw) <- headers                                       # change the
 data.raw <- data.raw[,c("PUBCHEM_SID","PUBCHEM_ACTIVITY_SCORE")]     # select SID and the activity score from the data
 colnames(data.raw) <- c("SID","Score")                               # change column names
 ```
+
+## Data cleaning
+Columns that contain missing values and columns that are nearly constant are dropped from the dataframe.
+```{r}
+# Delete columns with missing values
+descs <- data[, !apply(data, 2, function(x) any(is.na(x)) )]
+
+# Delete columns with near zero variance using nearZeroVar from the caret package
+badCols <- nearZeroVar(descs)
+descs <- descs[, -badCols]
+
+# further filter out columns with low correlation
+r2 <- which(cor(descs[1:(length(descs)-1)])^2 > .29, arr.ind=TRUE)
+r2 <- r2[ r2[,1] > r2[,2] , ]
+d <- descs[, -unique(r2[,2])]
+```
+## Normalizing the data 
+Then the data is normalised to stabilise its variance. The data transformation makes the data more normal distribution-like and improves the validity of measures of association such as the Pearson correlation between variables and for other data stabilization procedures.
+```{r}
+# use preProcess from the caret package to normalize the filtered data
+data <-predict(preProcess(d[,1:dim(d)[2]],method = "BoxCox"),d[,2:dim(d)[2]])
+```
+## Subset the data
+The data is subset into a testset/ trainset with a 20% / 80% split.
+```{r}
+# subset the data into train and test sets
+ind<-sample(2,nrow(data),replace=TRUE,prob=c(0.8,0.2))
+trainset_x<-data[ind==1,1:dim(data)[2]]
+train_y<-trainset_x$activity
+testset_x<-data[ind==2,1:dim(data)[2]]
+test_y<- testset_x$activity
+```
