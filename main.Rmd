@@ -23,7 +23,6 @@ To import the data I am first setting the local path to the directory that the d
 DATA.DIR <- "/Users/felix/Google Drive/Uni/Systems Biology/Year 2/Scientific Programming/scientificProgramming2/data"
 setwd(DATA.DIR) # set the working directory
 ```
-
 Afterwards, I import the activity scores. To properly import the activity scores matrix, 2 import function calls are needed: one to import the header and one to import the data.
 ```{r}
 # import the header and the activity scores
@@ -33,7 +32,75 @@ colnames(data.raw) <- headers                                       # change the
 data.raw <- data.raw[,c("PUBCHEM_SID","PUBCHEM_ACTIVITY_SCORE")]     # select SID and the activity score from the data
 colnames(data.raw) <- c("SID","Score")                               # change column names
 ```
+### Computing the Descriptor matrix from the `.sdf` file
+The following code computes the descriptor matrix from a `.sdf` file. It takes a long time to run (and installing the packages like rJava, required for it to run, is also annoying). That is why the output is saved and the evaluation is set to false. Thus, you can run it once to create the descriptor matrix, and then, use the saved version, instead of recomputing it, on further runs.
+```{r eval = FALSE}
+inactives <- which(data.raw[,"Score"] < 10)   # select all inactive molecules
+actives   <- which(data.raw[,"Score"] >= 10)  # select all active molecules (activity score >= 10)
+cat("Amount of inactive molecules: ", length(inactives))
 
+selectedInactives <- sample(inactives, 200)
+selectedActives   <- sample(actives, 12000)
+# combine the selected molecules into one dataframe
+qsarSmallData     <- rbind(data.raw[selectedActives,], data.raw[selectedInactives,])
+```
+Now, I load the `aid624202.sdf` file and compute the descriptor matrix. As the file is over 1 gb, it is imported using an iterator. The iterator goes through every molecule one by one and adds it to the `mols` list, if it's part of the selected Substance IDs. The code to compute the descriptor matrix is taken from [here](https://github.com/egonw/scientificProgramming/blob/master/assignment%202/descriptors.Rmd)
+```{r eval = FALSE}
+# select the SIDs from the selected subset of molecules
+selectedSubstanceIDs = qsarSmallData[,"SID"]
+
+# iload.molecules requires the full path
+# creates an iterator to import the `aid624202.sdf` file
+iter <- iload.molecules('/Users/felix/Google Drive/Uni/Systems Biology/Year 2/Scientific Programming/scientificProgramming2/data/aid624202.sdf', type='sdf')
+# creates a txtProgressBar object to display the progress of importing the selected molecules
+pb <- txtProgressBar(min = 0, max = 12200, style = 3)
+hitsFound = 0   # initiate counter
+mols = list()   # initiate list to hold the selected molecules
+while(hasNext(iter)) {  # runs until 
+  mol <- nextElem(iter) # set mol to the next molecule
+  
+  # get the SID of the current molecule
+  sdfSID = get.property(mol, "PUBCHEM_SUBSTANCE_ID")
+  # check whether the SID of the current molecule is part of the selected molecules
+  if (sdfSID %in% selectedSubstanceIDs) {
+    hitsFound = hitsFound + 1 # update the counter
+    mols[[hitsFound]] = mol   # save the selected molecule in the list
+    
+    # stop when all hits are found instead of reading in all molecules
+    if(hitsFound == 12200){
+      break
+    }
+  }
+  setTxtProgressBar(pb, hitsFound)
+}
+close(pb)
+```
+```{r eval = FALSE}
+# get the names for the descriptor matrix
+descNames <- unique(unlist(sapply(get.desc.categories()[2:4], get.desc.names)))
+
+# compute the descriptor matrix
+descs <- eval.desc(mols, descNames, verbose = TRUE)
+class(descs)
+
+# get the SID for the molecules
+molSIDs = unlist(lapply(mols, function(x) { get.property(x, "PUBCHEM_SUBSTANCE_ID")} ))
+# save the descriptor dataframe as a csv
+write.csv(cbind(molSIDs, descs), file = "descriptors12200.csv")
+```
+Then I combine the descriptor matrix with the score vector.
+```{r}
+# import the previously computed descriptor matrix
+# import "descriptors.csv" instead to use the descriptors.csv 
+# file with 1050 molecules
+x <- read.csv('descriptors12200.csv',row=2)
+# select the selected samples from the dataframe
+data.raw = data.raw[match(rownames(x),data.raw$SID),]
+
+# add the acivity score to the descriptor dataframe (for plsr)
+activity <- data.raw$Score
+data = cbind(x,activity)
+```
 ## Data cleaning
 Columns that contain missing values and columns that are nearly constant are dropped from the dataframe.
 ```{r}
