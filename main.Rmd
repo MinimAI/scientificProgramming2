@@ -40,7 +40,7 @@ actives   <- which(data.raw[,"Score"] >= 10)  # select all active molecules (act
 cat("Amount of inactive molecules: ", length(inactives))
 
 num_inactives <- 300
-num_actives   <- 1050
+num_actives   <- 750
 num_total     <- num_inactives + num_actives
 
 selectedInactives <- sample(inactives, num_inactives)
