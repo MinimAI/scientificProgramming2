@@ -30,7 +30,7 @@ headers   <- read.csv('aid624202.csv', header=FALSE, nrows=1, as.is=TRUE, row=1)
 data.raw  <- read.csv('aid624202.csv',skip=6,header=FALSE,row=1)
 colnames(data.raw) <- headers                                       # change the names of the data to the correct ones
 data.raw  <- data.raw[,c("PUBCHEM_SID","PUBCHEM_ACTIVITY_SCORE")]   # select SID and the activity score from the data
-colnames(data.raw) <- c("SID","Score")                              # change column names
+colnames(data.raw) <- c("SID","Score")# change column names
 ```
 ### Computing the Descriptor matrix from the `.sdf` file
 The following code computes the descriptor matrix from a `.sdf` file. It takes a long time to run (and installing the packages like rJava, required for it to run, is also annoying). That is why the output is saved and the evaluation is set to false. Thus, you can run it once to create the descriptor matrix, and then, use the saved version, instead of recomputing it, on further runs.
@@ -39,8 +39,8 @@ inactives <- which(data.raw[,"Score"] < 10)   # select all inactive molecules
 actives   <- which(data.raw[,"Score"] >= 10)  # select all active molecules (activity score >= 10)
 cat("Amount of inactive molecules: ", length(inactives))
 
-num_inactives <- 200
-num_actives   <- 12000
+num_inactives <- 300
+num_actives   <- 1050
 num_total     <- num_inactives + num_actives
 
 selectedInactives <- sample(inactives, num_inactives)
@@ -48,7 +48,7 @@ selectedActives   <- sample(actives, num_actives)
 # combine the selected molecules into one dataframe
 qsarSmallData     <- rbind(data.raw[selectedActives,], data.raw[selectedInactives,])
 ```
-Now, I load the `aid624202.sdf` file and compute the descriptor matrix. As the file is over 1 gb, it is imported using an iterator. The iterator goes through every molecule one by one and adds it to the `mols` list, if it's part of the selected Substance IDs. The code to compute the descriptor matrix is taken from [here](https://github.com/egonw/scientificProgramming/blob/master/assignment%202/descriptors.Rmd)
+Now, I load the `aid624202.sdf` file and compute the descriptor matrix. As the file is over 1 gb, it is imported using an iterator. The iterator goes through every molecule one by one and adds it to the `mols` list, if it's part of the selected Substance IDs. The code to compute the descriptor matrix is taken from [here](https://github.com/egonw/scientificProgramming/blob/master/assignment%202/descriptors.Rmd).
 ```{r eval = FALSE}
 # select the SIDs from the selected subset of molecules
 selectedSubstanceIDs = qsarSmallData[,"SID"]
@@ -78,8 +78,7 @@ while(hasNext(iter)) {  # runs until
   setTxtProgressBar(pb, hitsFound)
 }
 close(pb)
-```
-```{r eval = FALSE}
+
 # get the names for the descriptor matrix
 descNames <- unique(unlist(sapply(get.desc.categories()[2:4], get.desc.names)))
 
